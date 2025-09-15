@@ -1,0 +1,20 @@
+<div class="pomodoro">
+  <div class="modes">
+    <button (click)="setToWork()">Work</button>
+    <button (click)="setToShortBreak()">Short Break</button>
+    <button (click)="setToLongBreak()">Long Break</button>
+  </div>
+  <div class="timer">
+    <span class="display">{{ formattedRemaining() }}</span>
+    <div class="progress-bar"></div>
+  </div>
+  <div class="control">
+    <button class="btn-switch" (click)="toggleTimer()">
+      {{ isRunning() ? 'Pause' : 'Start' }}
+    </button>
+    @if (isRunning()) {<button class="btn-skip" (click)="skipTimer()">Skip</button>}
+  </div>
+  <div>
+    <span>Session # {{ workCount() }}</span>
+  </div>
+</div>
