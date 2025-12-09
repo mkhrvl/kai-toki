@@ -1,0 +1,48 @@
+.pomodoro {
+  background-color: beige;
+  border-radius: 5px;
+  padding: 1rem;
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.display {
+  font-size: 5rem;
+}
+
+.control {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-toggle,
+.btn-skip {
+  padding: 0.75rem 2rem;
+}
+
+.modes > button {
+  width: 85px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 5px;
+  border: none;
+  background: none;
+  transition: all, cubic-bezier(0.075, 0.82, 0.165, 1), 0.05s;
+}
+
+.modes > button:active {
+  background-color: red;
+}
+
+.btn-session {
+  border: none;
+  background: none;
+  border-radius: 5px;
+  padding: 0.25rem;
+}
+
+.btn-session:hover {
+  background: lightgrey;
+}

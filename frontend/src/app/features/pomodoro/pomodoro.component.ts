@@ -1,7 +1,8 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, OnDestroy, signal } from '@angular/core';
 import { Pomodoro } from './pomodoro.interface';
-import { PomodoroMode } from './pomodoro-mode.enum';
+import { PomodoroMode } from './pomodoro.enum';
 import { PomodoroService } from './pomodoro.service';
+import { filter, Subject, takeUntil, timer } from 'rxjs';
 
 @Component({
   selector: 'app-pomodoro',
@@ -9,8 +10,8 @@ import { PomodoroService } from './pomodoro.service';
   templateUrl: './pomodoro.component.html',
   styleUrl: './pomodoro.component.css',
 })
-export class PomodoroComponent {
-  pomodoroService: PomodoroService = new PomodoroService();
+export class PomodoroComponent implements OnDestroy {
+  private pomodoroService = inject(PomodoroService);
 
   // TODO: Implement fetching saved pomodoro settings from database.
   pomodoro: Pomodoro = this.pomodoroService.getPomodoroByUserId('');
@@ -26,31 +27,21 @@ export class PomodoroComponent {
         return this.pomodoro.workDuration;
     }
   });
-  secondsRemaining = signal(this.durationInMinutes() * 60);
+  secondsRemaining = linkedSignal(() => this.durationInMinutes() * 60);
   formattedRemaining = computed(() => this.formatTime(this.secondsRemaining()));
-  isRunning = signal(false);
-  workCount = signal(1);
+  isRunning = signal<boolean>(false);
+  sessionCount = signal<number>(1);
   breakCount = signal(0);
 
-  private intervalId: number | undefined;
+  private destroy$ = new Subject<void>();
 
   constructor() {
-    this.setToWork();
+    this.setPomodoroMode(PomodoroMode.Work);
   }
 
-  public setToWork() {
-    this.mode.set(PomodoroMode.Work);
-    this.secondsRemaining.set(this.durationInMinutes() * 60);
-  }
-
-  public setToShortBreak() {
-    this.mode.set(PomodoroMode.ShortBreak);
-    this.secondsRemaining.set(this.durationInMinutes() * 60);
-  }
-
-  public setToLongBreak() {
-    this.mode.set(PomodoroMode.LongBreak);
-    this.secondsRemaining.set(this.durationInMinutes() * 60);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   public toggleTimer() {
@@ -65,21 +56,44 @@ export class PomodoroComponent {
     this.handleModeTransition();
   }
 
+  public setToWork() {
+    this.setPomodoroMode(PomodoroMode.Work);
+  }
+
+  public setToShortBreak() {
+    this.setPomodoroMode(PomodoroMode.ShortBreak);
+  }
+
+  public setToLongBreak() {
+    this.setPomodoroMode(PomodoroMode.LongBreak);
+  }
+
+  public resetSession() {
+    this.sessionCount.set(1);
+  }
+
   private startTimer() {
     this.isRunning.set(true);
-
-    this.intervalId = setInterval(() => {
-      if (this.secondsRemaining() > 0) {
-        this.secondsRemaining.update((value) => value - 1);
-      } else {
-        this.handleModeTransition();
-      }
-    }, 1000);
+    this.destroy$.next();
+    timer(0, 1000)
+      .pipe(takeUntil(this.destroy$), filter(this.isRunning))
+      .subscribe(() => {
+        const newValue = this.secondsRemaining() - 1;
+        this.secondsRemaining.set(newValue);
+        if (newValue <= 0) {
+          this.handleModeTransition();
+        }
+      });
   }
 
   private stopTimer() {
-    clearInterval(this.intervalId);
     this.isRunning.set(false);
+  }
+
+  private setPomodoroMode(mode: PomodoroMode) {
+    this.stopTimer();
+    this.mode.set(mode);
+    this.secondsRemaining.set(this.durationInMinutes() * 60);
   }
 
   private handleModeTransition() {
@@ -87,9 +101,9 @@ export class PomodoroComponent {
 
     if (this.mode() === PomodoroMode.Work) {
       if (this.breakCount() >= this.pomodoro.longBreakInterval) {
-        this.setToLongBreak();
+        this.setPomodoroMode(PomodoroMode.LongBreak);
       } else {
-        this.setToShortBreak();
+        this.setPomodoroMode(PomodoroMode.ShortBreak);
       }
       return;
     }
@@ -104,8 +118,8 @@ export class PomodoroComponent {
   }
 
   private transitionToWork() {
-    this.setToWork();
-    this.workCount.update((value) => value + 1);
+    this.setPomodoroMode(PomodoroMode.Work);
+    this.sessionCount.update((value) => value + 1);
   }
 
   private formatTime(totalSeconds: number): string {

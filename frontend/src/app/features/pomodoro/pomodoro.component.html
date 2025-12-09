@@ -9,12 +9,14 @@
     <div class="progress-bar"></div>
   </div>
   <div class="control">
-    <button class="btn-switch" (click)="toggleTimer()">
+    <button class="btn-toggle" (click)="toggleTimer()">
       {{ isRunning() ? 'Pause' : 'Start' }}
     </button>
     @if (isRunning()) {<button class="btn-skip" (click)="skipTimer()">Skip</button>}
   </div>
   <div>
-    <span>Session # {{ workCount() }}</span>
+    <button class="btn-session" (click)="resetSession()">
+      <span>Session # {{ sessionCount() }}</span>
+    </button>
   </div>
 </div>
