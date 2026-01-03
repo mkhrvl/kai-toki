@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="KaiToki.Api/KaiToki.Api.csproj" />
+  <Project Path="KaiToki.Application/KaiToki.Application.csproj" />
+  <Project Path="KaiToki.Contracts/KaiToki.Contracts.csproj" />
+  <Project Path="KaiToki.Domain/KaiToki.Domain.csproj" />
+  <Project Path="KaiToki.Infrastructure/KaiToki.Infrastructure.csproj" />
+</Solution>
